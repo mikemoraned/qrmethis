@@ -6,24 +6,28 @@ extern crate rocket;
 extern crate image;
 extern crate qrcode;
 
-use image::ImageBuffer;
-use image::Luma;
+//use image::{png, ColorType};
+// use image::Luma;
 use qrcode::QrCode;
 
 use rocket::http::RawStr;
 
+mod qrcode_response;
+
+use qrcode_response::QrCodeResponse;
+
 #[get("/<message>")]
-fn message(message: &RawStr) -> ImageBuffer {
+fn message(message: &RawStr) -> QrCodeResponse {
     let code = QrCode::new(message).unwrap();
 
-    // Render the bits into an image.
-    let image = code.render::<Luma<u8>>().build();
+    //    // Render the bits into an image.
+    //    let image = code.render::<Luma<u8>>().build();
+    //
+    //    let bytes = vec![];
+    //    png::PNGEncoder::new(bytes).encode(&image, image.width(), image.height(), ColorType::Gray(1)).unwrap();
 
-    let string = code.render().light_color(' ').dark_color('#').build();
-    println!("{}", string);
-
-    // format!("{}", message.as_str())
-    image
+    //    bytes
+    QrCodeResponse { qr_code: code }
 }
 
 fn main() {
