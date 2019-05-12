@@ -18,7 +18,7 @@ use std::io::Write;
 
 #[get("/<message>")]
 fn message(message: &RawStr) -> Result<Response, Status> {
-    let qr_code = QrCode::new(message).unwrap();
+    let qr_code = QrCode::new(message).map_err(|_| Status::BadRequest)?;
 
     let image = qr_code.render::<Luma<u8>>().build();
 
