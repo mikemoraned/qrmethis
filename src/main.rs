@@ -12,6 +12,7 @@ mod qrcode_response;
 
 use qrcode::QrCode;
 use rocket::http::RawStr;
+use url::Url;
 
 use qrcode_response::QrCodeResponse;
 
@@ -23,8 +24,9 @@ fn message(message: &RawStr) -> QrCodeResponse {
 }
 
 fn main() {
+    let base_url = Url::parse("http://localhost:8000").unwrap();
     rocket::ignite()
-        .manage(graphql_schema::Model::new())
+        .manage(graphql_schema::Model::new(base_url))
         .manage(graphql_schema::Schema::new(
             graphql_schema::QueryRoot {},
             juniper::EmptyMutation::<graphql_schema::Model>::new(),

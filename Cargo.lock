@@ -482,6 +482,7 @@ dependencies = [
  "juniper_rocket 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "qrcode 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rocket 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "url 1.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
