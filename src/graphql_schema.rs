@@ -1,21 +1,16 @@
 use juniper::{EmptyMutation, FieldResult, RootNode};
 
 #[derive(juniper::GraphQLObject)]
-#[graphql(description = "A humanoid creature in the Star Wars universe")]
-struct Human {
-    id: String,
-    name: String,
+#[graphql(description = "A message, represented as a QR code")]
+struct QrCodeMessage {
+    message: String
 }
 
-pub struct Model {
-    
-}
+pub struct Model {}
 
 impl Model {
     pub fn new() -> Model {
-        Model {
-            
-        }
+        Model {}
     }
 }
 
@@ -27,13 +22,10 @@ juniper::graphql_object!(QueryRoot: Model |&self| {
 
     description: "Root object",
 
-    field human() -> FieldResult<Human> {
-        let human = Human {
-            id: "123".into(),
-            name: "Chesney Hawkes".into()
-        };
-
-        Ok(human)
+    field qr_code(message: String) -> FieldResult<QrCodeMessage> {
+        Ok(QrCodeMessage {
+            message
+        })
     }
 });
 
