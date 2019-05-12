@@ -1,19 +1,27 @@
-use rocket::response::content;
-use rocket::State;
+use rocket;
+use juniper_rocket;
 
-use crate::graphql_schema::*;
+use crate::graphql_schema;
 
-#[rocket::get("/")]
-pub fn graphiql() -> content::Html<String> {
+#[get("/")]
+pub fn graphiql() -> rocket::response::content::Html<String> {
     juniper_rocket::graphiql_source("/graphql")
 }
 
-#[rocket::post("/graphql", data = "<request>")]
-pub fn post_graphql_handler(
-    context: State<Query>,
+#[get("/graphql?<request>")]
+pub fn get_graphql_handler(
+    context: rocket::State<graphql_schema::Model>,
     request: juniper_rocket::GraphQLRequest,
-    schema: State<Schema>,
+    schema: rocket::State<graphql_schema::Schema>
 ) -> juniper_rocket::GraphQLResponse {
-    request.execute(&schema, 
-                    &context)
+    request.execute(&schema, &context)
+}
+
+#[post("/graphql", data = "<request>")]
+pub fn post_graphql_handler(
+    context: rocket::State<graphql_schema::Model>,
+    request: juniper_rocket::GraphQLRequest,
+    schema: rocket::State<graphql_schema::Schema>,
+) -> juniper_rocket::GraphQLResponse {
+    request.execute(&schema, &context)
 }

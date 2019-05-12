@@ -6,12 +6,11 @@ extern crate rocket;
 extern crate image;
 extern crate qrcode;
 
-
 mod graphql_handlers;
 mod graphql_schema;
 mod qrcode_response;
-use qrcode::QrCode;
 
+use qrcode::QrCode;
 use rocket::http::RawStr;
 
 use qrcode_response::QrCodeResponse;
@@ -25,14 +24,19 @@ fn message(message: &RawStr) -> QrCodeResponse {
 
 fn main() {
     rocket::ignite()
+        .manage(graphql_schema::Model::new())
+        .manage(graphql_schema::Schema::new(
+            graphql_schema::QueryRoot {},
+            juniper::EmptyMutation::<graphql_schema::Model>::new(),
+        ))
         .mount("/", routes![message])
-        // .mount(
-        //     "/",
-        //     routes![graphiql, get_graphql_handler, post_graphql_handler],
-        // )
         .mount(
             "/",
-            routes![graphql_handlers::graphiql],
+            routes![
+                graphql_handlers::graphiql,
+                graphql_handlers::get_graphql_handler,
+                graphql_handlers::post_graphql_handler,
+            ],
         )
         .launch();
 }

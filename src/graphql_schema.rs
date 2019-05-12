@@ -7,13 +7,25 @@ struct Human {
     name: String,
 }
 
-pub struct Context;
+pub struct Model {
+    
+}
 
-impl juniper::Context for Context {}
+impl Model {
+    pub fn new() -> Model {
+        Model {
+            
+        }
+    }
+}
 
-pub struct Query;
+impl juniper::Context for Model {}
 
-juniper::graphql_object!(Query: Context |&self| {
+pub struct QueryRoot;
+
+juniper::graphql_object!(QueryRoot: Model |&self| {
+
+    description: "Root object",
 
     field human() -> FieldResult<Human> {
         let human = Human {
@@ -25,4 +37,4 @@ juniper::graphql_object!(Query: Context |&self| {
     }
 });
 
-pub type Schema = RootNode<'static, Query, EmptyMutation<Query>>;
+pub type Schema = RootNode<'static, QueryRoot, EmptyMutation<Model>>;
