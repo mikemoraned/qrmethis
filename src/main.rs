@@ -16,9 +16,9 @@ use rocket::http::Status;
 use rocket::response::Response;
 use std::io::Write;
 
-struct Message<'l>(String);
+struct Message(String);
 
-impl<'r> FromParam<'r> for Message<'r> {
+impl<'r> FromParam<'r> for Message {
     type Error = &'r RawStr;
 
     fn from_param(param: &'r RawStr) -> Result<Self, Self::Error> {
@@ -34,7 +34,7 @@ impl<'r> FromParam<'r> for Message<'r> {
 }
 
 #[get("/<message>")]
-fn message(message: &Message) -> Result<Response, Status> {
+fn message<'r>(message: Message) -> Result<Response, Status> {
     let qr_code = QrCode::new(message.0).map_err(|_| Status::BadRequest)?;
 
     let image = qr_code.render::<Luma<u8>>().build();
