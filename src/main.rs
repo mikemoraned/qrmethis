@@ -6,10 +6,10 @@ extern crate rocket;
 extern crate image;
 extern crate qrcode;
 
-// mod qrcode_response;
-// mod graphql_handlers;
-// mod graphql_schema;
 
+mod graphql_handlers;
+mod graphql_schema;
+mod qrcode_response;
 use qrcode::QrCode;
 
 use rocket::http::RawStr;
@@ -26,9 +26,13 @@ fn message(message: &RawStr) -> QrCodeResponse {
 fn main() {
     rocket::ignite()
         .mount("/", routes![message])
+        // .mount(
+        //     "/",
+        //     routes![graphiql, get_graphql_handler, post_graphql_handler],
+        // )
         .mount(
             "/",
-            routes![graphiql, get_graphql_handler, post_graphql_handler],
+            routes![graphql_handlers::graphiql],
         )
         .launch();
 }
