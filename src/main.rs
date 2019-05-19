@@ -17,41 +17,42 @@ use rocket::request::FromParam;
 use rocket::Response;
 use std::io::Write;
 
-struct Message<'a>(&'a RawStr);
+struct LimitedMessage<'a>(&'a RawStr);
 
-impl<'r> FromParam<'r> for Message<'r> {
-    type Error = ();
+impl<'r> FromParam<'r> for LimitedMessage<'r> {
+    type Error = &'static str;
 
     fn from_param(param: &'r RawStr) -> Result<Self, Self::Error> {
         if param.len() <= 10 {
-            Ok(Message(param))
+            Ok(LimitedMessage(param))
+        } else {
+            Err("message too long")
         }
-        else {
-            Err(())
-        }
-        // match param.percent_decode() {
-        //     Ok(cow_str) => Ok(Message(&"Ok".to_string())),
-        //     Err(e) => Err(&"failed".to_string().clone())
-        // }
     }
 }
 
 #[get("/<message>")]
-fn message<'r>(message: Message<'r>) -> Result<Response, Status> {
-    let Message(inner) = message;
-    let qr_code = QrCode::new(inner).map_err(|_| Status::BadRequest)?;
+fn message<'r>(message: Result<LimitedMessage<'r>, &'static str>) -> Result<Response<'r>, Status> {
+    match message {
+        Ok(LimitedMessage(message)) => {
+            let qr_code = QrCode::new(message).map_err(|_| Status::BadRequest)?;
 
-    let image = qr_code.render::<Luma<u8>>().build();
+            let image = qr_code.render::<Luma<u8>>().build();
 
-    let mut buffer = Vec::new();
-    png::PNGEncoder::new(buffer.by_ref())
-        .encode(&image, image.width(), image.height(), ColorType::Gray(8))
-        .map_err(|_| Status::BadRequest)?;
+            let mut buffer = Vec::new();
+            png::PNGEncoder::new(buffer.by_ref())
+                .encode(&image, image.width(), image.height(), ColorType::Gray(8))
+                .map_err(|_| Status::BadRequest)?;
 
-    Response::build()
-        .header(ContentType::PNG)
-        .sized_body(Cursor::new(buffer))
-        .ok()
+            Response::build()
+                .header(ContentType::PNG)
+                .sized_body(Cursor::new(buffer))
+                .ok()
+        },
+        Err(_e) => {
+            Err(Status::BadRequest)
+        }
+    }
 }
 
 fn main() {
