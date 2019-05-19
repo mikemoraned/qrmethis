@@ -49,8 +49,11 @@ fn message<'r>(message: Result<LimitedMessage<'r>, &'static str>) -> Result<Resp
                 .sized_body(Cursor::new(buffer))
                 .ok()
         },
-        Err(_e) => {
-            Err(Status::BadRequest)
+        Err(e) => {
+            Response::build()
+            .status(Status::BadRequest)
+            .sized_body(Cursor::new(e))
+            .ok()
         }
     }
 }
