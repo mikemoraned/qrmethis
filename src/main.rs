@@ -20,10 +20,10 @@ use std::io::Write;
 struct Message<'a>(&'a RawStr);
 
 impl<'r> FromParam<'r> for Message<'r> {
-    type Error = &'r RawStr;
+    type Error = ();
 
     fn from_param(param: &'r RawStr) -> Result<Self, Self::Error> {
-        Ok(Message(param))
+        Err(())
         // match param.percent_decode() {
         //     Ok(cow_str) => Ok(Message(&"Ok".to_string())),
         //     Err(e) => Err(&"failed".to_string().clone())
