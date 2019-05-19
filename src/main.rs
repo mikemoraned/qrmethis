@@ -14,25 +14,27 @@ use rocket::http::ContentType;
 use rocket::http::RawStr;
 use rocket::http::Status;
 use rocket::request::FromParam;
-
 use rocket::Response;
 use std::io::Write;
-struct Message<'a>(&'a str);
+
+struct Message<'a>(&'a RawStr);
 
 impl<'r> FromParam<'r> for Message<'r> {
     type Error = &'r RawStr;
 
     fn from_param(param: &'r RawStr) -> Result<Self, Self::Error> {
-        match param.percent_decode() {
-            Ok(cow_str) => Ok(Message(&"Ok")),
-            Err(e) => Ok(Message(&"Error")),
-        }
+        Ok(Message(param))
+        // match param.percent_decode() {
+        //     Ok(cow_str) => Ok(Message(&"Ok".to_string())),
+        //     Err(e) => Err(&"failed".to_string().clone())
+        // }
     }
 }
 
 #[get("/<message>")]
 fn message<'r>(message: Message<'r>) -> Result<Response, Status> {
-    let qr_code = QrCode::new(message.0).map_err(|_| Status::BadRequest)?;
+    let Message(inner) = message;
+    let qr_code = QrCode::new(inner).map_err(|_| Status::BadRequest)?;
 
     let image = qr_code.render::<Luma<u8>>().build();
 
