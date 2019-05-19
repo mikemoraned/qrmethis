@@ -23,7 +23,12 @@ impl<'r> FromParam<'r> for Message<'r> {
     type Error = ();
 
     fn from_param(param: &'r RawStr) -> Result<Self, Self::Error> {
-        Err(())
+        if param.len() <= 10 {
+            Ok(Message(param))
+        }
+        else {
+            Err(())
+        }
         // match param.percent_decode() {
         //     Ok(cow_str) => Ok(Message(&"Ok".to_string())),
         //     Err(e) => Err(&"failed".to_string().clone())
