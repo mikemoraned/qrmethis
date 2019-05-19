@@ -9,32 +9,29 @@ use image::Luma;
 use image::{png, ColorType};
 use qrcode::QrCode;
 
-use rocket::request::FromParam;
+
 use rocket::http::ContentType;
 use rocket::http::RawStr;
 use rocket::http::Status;
-use rocket::response::Response;
+use rocket::request::FromParam;
+
+use rocket::Response;
 use std::io::Write;
+struct Message<'a>(&'a str);
 
-struct Message(String);
-
-impl<'r> FromParam<'r> for Message {
+impl<'r> FromParam<'r> for Message<'r> {
     type Error = &'r RawStr;
 
     fn from_param(param: &'r RawStr) -> Result<Self, Self::Error> {
         match param.percent_decode() {
-            Ok(cow_str) => {
-                Ok(Message("Ok".into()))
-            },
-            Err(e) => {
-                Ok(Message("Error".into()))
-            }
+            Ok(cow_str) => Ok(Message(&"Ok")),
+            Err(e) => Ok(Message(&"Error")),
         }
     }
 }
 
 #[get("/<message>")]
-fn message<'r>(message: Message) -> Result<Response, Status> {
+fn message<'r>(message: Message<'r>) -> Result<Response, Status> {
     let qr_code = QrCode::new(message.0).map_err(|_| Status::BadRequest)?;
 
     let image = qr_code.render::<Luma<u8>>().build();
