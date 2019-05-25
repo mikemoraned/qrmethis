@@ -13,24 +13,52 @@ use qrcode::QrCode;
 use rocket::http::ContentType;
 use rocket::http::RawStr;
 use rocket::http::Status;
-use rocket::response::Response;
+use rocket::request::FromParam;
+use rocket::Response;
 use std::io::Write;
 
-#[get("/<message>")]
-fn message(message: &RawStr) -> Result<Response, Status> {
-    let qr_code = QrCode::new(message).map_err(|_| Status::BadRequest)?;
+struct Message<'a>(&'a RawStr);
 
-    let image = qr_code.render::<Luma<u8>>().build();
+impl<'r> FromParam<'r> for Message<'r> {
+    type Error = &'static str;
 
-    let mut buffer = Vec::new();
-    png::PNGEncoder::new(buffer.by_ref())
-        .encode(&image, image.width(), image.height(), ColorType::Gray(8))
-        .map_err(|_| Status::BadRequest)?;
+    fn from_param(param: &'r RawStr) -> Result<Self, Self::Error> {
+        if param.len() <= 10 {
+            Ok(Message(param))
+        } else {
+            Err("message too long")
+        }
+    }
+}
 
+fn bad_request<T>(reason: &str) -> Result<Response, T> {
     Response::build()
-        .header(ContentType::PNG)
-        .sized_body(Cursor::new(buffer))
+        .status(Status::BadRequest)
+        .sized_body(Cursor::new(reason))
         .ok()
+}
+
+#[get("/<message>")]
+fn message<'r>(message: Result<Message<'r>, &'static str>) -> Result<Response<'r>, Status> {
+    match message {
+        Ok(Message(message)) => match QrCode::new(message) {
+            Ok(qr_code) => {
+                let image = qr_code.render::<Luma<u8>>().build();
+
+                let mut buffer = Vec::new();
+                png::PNGEncoder::new(buffer.by_ref())
+                    .encode(&image, image.width(), image.height(), ColorType::Gray(8))
+                    .map_err(|_| Status::BadRequest)?;
+
+                Response::build()
+                    .header(ContentType::PNG)
+                    .sized_body(Cursor::new(buffer))
+                    .ok()
+            }
+            Err(_) => bad_request("can't convert message to qr code"),
+        },
+        Err(e) => bad_request(e),
+    }
 }
 
 fn main() {
