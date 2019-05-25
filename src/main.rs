@@ -17,14 +17,14 @@ use rocket::request::FromParam;
 use rocket::Response;
 use std::io::Write;
 
-struct LimitedMessage<'a>(&'a RawStr);
+struct Message<'a>(&'a RawStr);
 
-impl<'r> FromParam<'r> for LimitedMessage<'r> {
+impl<'r> FromParam<'r> for Message<'r> {
     type Error = &'static str;
 
     fn from_param(param: &'r RawStr) -> Result<Self, Self::Error> {
         if param.len() <= 10 {
-            Ok(LimitedMessage(param))
+            Ok(Message(param))
         } else {
             Err("message too long")
         }
@@ -32,9 +32,9 @@ impl<'r> FromParam<'r> for LimitedMessage<'r> {
 }
 
 #[get("/<message>")]
-fn message<'r>(message: Result<LimitedMessage<'r>, &'static str>) -> Result<Response<'r>, Status> {
+fn message<'r>(message: Result<Message<'r>, &'static str>) -> Result<Response<'r>, Status> {
     match message {
-        Ok(LimitedMessage(message)) => {
+        Ok(Message(message)) => {
             let qr_code = QrCode::new(message).map_err(|_| Status::BadRequest)?;
 
             let image = qr_code.render::<Luma<u8>>().build();
@@ -48,13 +48,11 @@ fn message<'r>(message: Result<LimitedMessage<'r>, &'static str>) -> Result<Resp
                 .header(ContentType::PNG)
                 .sized_body(Cursor::new(buffer))
                 .ok()
-        },
-        Err(e) => {
-            Response::build()
+        }
+        Err(e) => Response::build()
             .status(Status::BadRequest)
             .sized_body(Cursor::new(e))
-            .ok()
-        }
+            .ok(),
     }
 }
 
