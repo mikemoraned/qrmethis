@@ -31,28 +31,32 @@ impl<'r> FromParam<'r> for Message<'r> {
     }
 }
 
+fn bad_request<T>(reason: &str) -> Result<Response, T> {
+    Response::build()
+        .status(Status::BadRequest)
+        .sized_body(Cursor::new(reason))
+        .ok()
+}
+
 #[get("/<message>")]
 fn message<'r>(message: Result<Message<'r>, &'static str>) -> Result<Response<'r>, Status> {
     match message {
         Ok(Message(message)) => {
-            let qr_code = QrCode::new(message).map_err(|_| Status::BadRequest)?;
+            let qr_code = QrCode::new(message).map_err(|e| bad_request("can't convert message to qr code"))?;
 
             let image = qr_code.render::<Luma<u8>>().build();
 
             let mut buffer = Vec::new();
             png::PNGEncoder::new(buffer.by_ref())
                 .encode(&image, image.width(), image.height(), ColorType::Gray(8))
-                .map_err(|_| Status::BadRequest)?;
+                .map_err(|e| bad_request("can't create image"))?;
 
             Response::build()
                 .header(ContentType::PNG)
                 .sized_body(Cursor::new(buffer))
                 .ok()
         }
-        Err(e) => Response::build()
-            .status(Status::BadRequest)
-            .sized_body(Cursor::new(e))
-            .ok(),
+        Err(e) => bad_request(e),
     }
 }
 
