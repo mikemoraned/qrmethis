@@ -41,21 +41,22 @@ fn bad_request<T>(reason: &str) -> Result<Response, T> {
 #[get("/<message>")]
 fn message<'r>(message: Result<Message<'r>, &'static str>) -> Result<Response<'r>, Status> {
     match message {
-        Ok(Message(message)) => {
-            let qr_code = QrCode::new(message).map_err(|e| bad_request("can't convert message to qr code"))?;
+        Ok(Message(message)) => match QrCode::new(message) {
+            Ok(qr_code) => {
+                let image = qr_code.render::<Luma<u8>>().build();
 
-            let image = qr_code.render::<Luma<u8>>().build();
+                let mut buffer = Vec::new();
+                png::PNGEncoder::new(buffer.by_ref())
+                    .encode(&image, image.width(), image.height(), ColorType::Gray(8))
+                    .map_err(|_| Status::BadRequest)?;
 
-            let mut buffer = Vec::new();
-            png::PNGEncoder::new(buffer.by_ref())
-                .encode(&image, image.width(), image.height(), ColorType::Gray(8))
-                .map_err(|e| bad_request("can't create image"))?;
-
-            Response::build()
-                .header(ContentType::PNG)
-                .sized_body(Cursor::new(buffer))
-                .ok()
-        }
+                Response::build()
+                    .header(ContentType::PNG)
+                    .sized_body(Cursor::new(buffer))
+                    .ok()
+            }
+            Err(_) => bad_request("can't convert message to qr code"),
+        },
         Err(e) => bad_request(e),
     }
 }
