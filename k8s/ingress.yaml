@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: qrmethis-ingress
+  namespace: qrmethis
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    certmanager.k8s.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+    - hosts:
+        - qrmethis.do.houseofmoran.io
+      secretName: letsencrypt-prod
+  rules:
+    - host: qrmethis.do.houseofmoran.io
+      http:
+        paths:
+          - path: /
+            backend:
+              serviceName: qrmethis-service
+              servicePort: 80
