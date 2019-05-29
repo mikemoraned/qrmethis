@@ -1,0 +1,13 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: qrmethis-service
+  namespace: qrmethis
+spec:
+  type: NodePort
+  selector:
+    app: qrmethis
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
