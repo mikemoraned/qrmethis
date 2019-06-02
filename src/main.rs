@@ -8,8 +8,8 @@ extern crate log;
 use std::io::Cursor;
 
 
+use image::gif;
 use image::Rgb;
-use image::{png, ColorType};
 use qrcode::QrCode;
 
 
@@ -53,18 +53,33 @@ fn message<'r>(message: Result<Message<'r>, &'static str>) -> Result<Response<'r
                         data: [254, 254, 254],
                     })
                     .min_dimensions(300, 300)
+                    .max_dimensions(600, 600)
                     .build();
 
+                // let mut buffer = Vec::new();
+                // png::PNGEncoder::new(buffer.by_ref())
+                //     .encode(&image, image.width(), image.height(), ColorType::RGB(8))
+                //     .map_err(|e| {
+                //         warn!("when creating image: {}", e);
+                //         Status::BadRequest
+                //     })?;
+
                 let mut buffer = Vec::new();
-                png::PNGEncoder::new(buffer.by_ref())
-                    .encode(&image, image.width(), image.height(), ColorType::RGB(8))
+                let frame =
+                    gif::Frame::from_rgb(image.width() as u16, image.height() as u16, &image);
+                gif::Encoder::new(&mut buffer.by_ref())
+                    .encode(&frame)
                     .map_err(|e| {
                         warn!("when creating image: {}", e);
                         Status::BadRequest
                     })?;
 
+                // Response::build()
+                //     .header(ContentType::PNG)
+                //     .sized_body(Cursor::new(buffer))
+                //     .ok()
                 Response::build()
-                    .header(ContentType::PNG)
+                    .header(ContentType::GIF)
                     .sized_body(Cursor::new(buffer))
                     .ok()
             }
