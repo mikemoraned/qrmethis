@@ -7,9 +7,7 @@ extern crate log;
 
 use std::io::Cursor;
 
-
-use image::gif;
-use image::Rgb;
+use image::{png, ColorType, Luma};
 use qrcode::QrCode;
 
 
@@ -47,41 +45,36 @@ fn message<'r>(message: Result<Message<'r>, &'static str>) -> Result<Response<'r
         Ok(Message(message)) => match QrCode::new(message) {
             Ok(qr_code) => {
                 let image = qr_code
-                    .render()
-                    .dark_color(Rgb { data: [0, 0, 0] })
-                    .light_color(Rgb {
-                        data: [254, 254, 254],
-                    })
+                    .render::<Luma<u8>>()
                     .min_dimensions(300, 300)
-                    .max_dimensions(600, 600)
                     .build();
 
-                // let mut buffer = Vec::new();
-                // png::PNGEncoder::new(buffer.by_ref())
-                //     .encode(&image, image.width(), image.height(), ColorType::RGB(8))
-                //     .map_err(|e| {
-                //         warn!("when creating image: {}", e);
-                //         Status::BadRequest
-                //     })?;
-
                 let mut buffer = Vec::new();
-                let frame =
-                    gif::Frame::from_rgb(image.width() as u16, image.height() as u16, &image);
-                gif::Encoder::new(&mut buffer.by_ref())
-                    .encode(&frame)
+                png::PNGEncoder::new(buffer.by_ref())
+                    .encode(&image, image.width(), image.height(), ColorType::Gray(8))
                     .map_err(|e| {
                         warn!("when creating image: {}", e);
                         Status::BadRequest
                     })?;
 
-                // Response::build()
-                //     .header(ContentType::PNG)
-                //     .sized_body(Cursor::new(buffer))
-                //     .ok()
+                // let mut buffer = Vec::new();
+                // let frame =
+                //     gif::Frame::from_rgb(image.width() as u16, image.height() as u16, &image);
+                // gif::Encoder::new(&mut buffer.by_ref())
+                //     .encode(&frame)
+                //     .map_err(|e| {
+                //         warn!("when creating image: {}", e);
+                //         Status::BadRequest
+                //     })?;
+
                 Response::build()
-                    .header(ContentType::GIF)
+                    .header(ContentType::PNG)
                     .sized_body(Cursor::new(buffer))
                     .ok()
+                // Response::build()
+                //     .header(ContentType::GIF)
+                //     .sized_body(Cursor::new(buffer))
+                //     .ok()
             }
             Err(_) => bad_request("can't convert message to qr code"),
         },
