@@ -44,18 +44,24 @@ fn message<'r>(message: Result<Message<'r>, &'static str>) -> Result<Response<'r
     match message {
         Ok(Message(message)) => match QrCode::new(message) {
             Ok(qr_code) => {
-                let image = qr_code
-                    .render::<Luma<u8>>()
-                    .min_dimensions(300, 300)
-                    .build();
+                // let image = qr_code
+                //     .render::<Luma<u8>>()
+                //     .min_dimensions(300, 300)
+                //     .build();
 
-                let mut buffer = Vec::new();
-                png::PNGEncoder::new(buffer.by_ref())
-                    .encode(&image, image.width(), image.height(), ColorType::Gray(8))
-                    .map_err(|e| {
-                        warn!("when creating image: {}", e);
-                        Status::BadRequest
-                    })?;
+                // let mut buffer = Vec::new();
+                // png::PNGEncoder::new(buffer.by_ref())
+                //     .encode(&image, image.width(), image.height(), ColorType::Gray(8))
+                //     .map_err(|e| {
+                //         warn!("when creating image: {}", e);
+                //         Status::BadRequest
+                //     })?;
+
+                // TODO: convert QrCode to colors, and then convert these to GIF indexed
+                // colors, then export a frame as a GIF
+                // then, starting randomly flipping these indexed colors, either to 0 or 1
+                // which represent original colors, or do a random other indexed colots
+                // do this N times, and then export these as frames of the GIF animation
 
                 // let mut buffer = Vec::new();
                 // let frame =
