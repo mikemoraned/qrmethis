@@ -2,10 +2,13 @@
 
 #[macro_use]
 extern crate rocket;
+#[macro_use]
+extern crate log;
 
 use std::io::Cursor;
 
-use image::Luma;
+
+use image::Rgb;
 use image::{png, ColorType};
 use qrcode::QrCode;
 
@@ -43,12 +46,22 @@ fn message<'r>(message: Result<Message<'r>, &'static str>) -> Result<Response<'r
     match message {
         Ok(Message(message)) => match QrCode::new(message) {
             Ok(qr_code) => {
-                let image = qr_code.render::<Luma<u8>>().build();
+                let image = qr_code
+                    .render()
+                    .dark_color(Rgb { data: [0, 0, 0] })
+                    .light_color(Rgb {
+                        data: [254, 254, 254],
+                    })
+                    .min_dimensions(300, 300)
+                    .build();
 
                 let mut buffer = Vec::new();
                 png::PNGEncoder::new(buffer.by_ref())
-                    .encode(&image, image.width(), image.height(), ColorType::Gray(8))
-                    .map_err(|_| Status::BadRequest)?;
+                    .encode(&image, image.width(), image.height(), ColorType::RGB(8))
+                    .map_err(|e| {
+                        warn!("when creating image: {}", e);
+                        Status::BadRequest
+                    })?;
 
                 Response::build()
                     .header(ContentType::PNG)
