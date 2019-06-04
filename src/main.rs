@@ -7,7 +7,7 @@ extern crate log;
 
 use std::io::Cursor;
 
-use image::{png, ColorType, Luma};
+use image::{gif, Luma};
 use qrcode::QrCode;
 
 
@@ -39,23 +39,29 @@ fn bad_request<T>(reason: &str) -> Result<Response, T> {
         .ok()
 }
 
+fn encode_as_gif() -> Vec<u8> {
+    let mut buffer = Vec::new();
+
+    {
+        let mutable_buffer = &mut buffer;
+        // let frames = vec![  ];
+        let _frame = gif::Frame::default();
+        let _encoder = gif::Encoder::new(mutable_buffer.by_ref());
+    }
+
+    // Vec::new()
+    buffer
+}
+
 #[get("/<message>")]
 fn message<'r>(message: Result<Message<'r>, &'static str>) -> Result<Response<'r>, Status> {
     match message {
         Ok(Message(message)) => match QrCode::new(message) {
             Ok(qr_code) => {
-                // let image = qr_code
-                //     .render::<Luma<u8>>()
-                //     .min_dimensions(300, 300)
-                //     .build();
-
-                // let mut buffer = Vec::new();
-                // png::PNGEncoder::new(buffer.by_ref())
-                //     .encode(&image, image.width(), image.height(), ColorType::Gray(8))
-                //     .map_err(|e| {
-                //         warn!("when creating image: {}", e);
-                //         Status::BadRequest
-                //     })?;
+                let _image = qr_code
+                    .render::<Luma<u8>>()
+                    .min_dimensions(300, 300)
+                    .build();
 
                 // TODO: convert QrCode to colors, and then convert these to GIF indexed
                 // colors, then export a frame as a GIF
@@ -63,24 +69,21 @@ fn message<'r>(message: Result<Message<'r>, &'static str>) -> Result<Response<'r
                 // which represent original colors, or do a random other indexed colots
                 // do this N times, and then export these as frames of the GIF animation
 
-                // let mut buffer = Vec::new();
-                // let frame =
-                //     gif::Frame::from_rgb(image.width() as u16, image.height() as u16, &image);
-                // gif::Encoder::new(&mut buffer.by_ref())
-                //     .encode(&frame)
-                //     .map_err(|e| {
-                //         warn!("when creating image: {}", e);
-                //         Status::BadRequest
-                //     })?;
+                // let buffer = Vec::new();
+                let buffer = encode_as_gif();
+                // // let frames = vec![  ];
+                // let _frame = gif::Frame::default();
+                // let _encoder = gif::Encoder::new(buffer.by_ref());
+                // // encoder.encode(&frame)
+                // //     .map_err(|e| {
+                // //         warn!("when creating image: {}", e);
+                // //         Status::BadRequest
+                // //     })?;
 
                 Response::build()
-                    .header(ContentType::PNG)
+                    .header(ContentType::GIF)
                     .sized_body(Cursor::new(buffer))
                     .ok()
-                // Response::build()
-                //     .header(ContentType::GIF)
-                //     .sized_body(Cursor::new(buffer))
-                //     .ok()
             }
             Err(_) => bad_request("can't convert message to qr code"),
         },
