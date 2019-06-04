@@ -8,6 +8,7 @@ extern crate log;
 use std::io::Cursor;
 
 use image::{gif, Luma};
+use image::ImageResult;
 use qrcode::QrCode;
 
 
@@ -39,18 +40,10 @@ fn bad_request<T>(reason: &str) -> Result<Response, T> {
         .ok()
 }
 
-fn encode_as_gif() -> Vec<u8> {
-    let mut buffer = Vec::new();
-
-    {
-        // let mutable_buffer = &mut buffer;
-        // let frames = vec![  ];
-        let frame = gif::Frame::default();
-        let mut encoder = gif::Encoder::new(buffer.by_ref());
-        encoder.encode(&frame);
-    }
-
-    buffer
+fn encode_as_gif(buffer: &mut Vec<u8>) -> ImageResult<()> {
+    let frame = gif::Frame::default();
+    let mut encoder = gif::Encoder::new(buffer.by_ref());
+    encoder.encode(&frame)
 }
 
 #[get("/<message>")]
@@ -69,16 +62,12 @@ fn message<'r>(message: Result<Message<'r>, &'static str>) -> Result<Response<'r
                 // which represent original colors, or do a random other indexed colots
                 // do this N times, and then export these as frames of the GIF animation
 
-                // let buffer = Vec::new();
-                let buffer = encode_as_gif();
-                // // let frames = vec![  ];
-                // let _frame = gif::Frame::default();
-                // let _encoder = gif::Encoder::new(buffer.by_ref());
-                // // encoder.encode(&frame)
-                // //     .map_err(|e| {
-                // //         warn!("when creating image: {}", e);
-                // //         Status::BadRequest
-                // //     })?;
+                let mut buffer = Vec::new();
+                encode_as_gif(&mut buffer)
+                    .map_err(|e| {
+                        warn!("when creating image: {}", e);
+                        Status::BadRequest
+                    })?;
 
                 Response::build()
                     .header(ContentType::GIF)
