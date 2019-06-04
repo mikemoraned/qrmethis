@@ -43,13 +43,12 @@ fn encode_as_gif() -> Vec<u8> {
     let mut buffer = Vec::new();
 
     {
-        let mutable_buffer = &mut buffer;
+        // let mutable_buffer = &mut buffer;
         // let frames = vec![  ];
         let _frame = gif::Frame::default();
-        let _encoder = gif::Encoder::new(mutable_buffer.by_ref());
+        let _encoder = gif::Encoder::new(buffer.by_ref());
     }
 
-    // Vec::new()
     buffer
 }
 
