@@ -7,8 +7,9 @@ extern crate log;
 
 use std::io::Cursor;
 
-use image::{gif, Luma};
+
 use image::ImageResult;
+use image::{gif, Luma};
 use qrcode::QrCode;
 
 
@@ -56,6 +57,26 @@ fn message<'r>(message: Result<Message<'r>, &'static str>) -> Result<Response<'r
                     .min_dimensions(300, 300)
                     .build();
 
+                let colors = qr_code.into_colors();
+                // println!("{:?}", colors);
+                let pixels: Vec<u8> = colors
+                    .iter()
+                    .map(|c| match c {
+                        qrcode::types::Color::Light => 1,
+                        qrcode::types::Color::Dark => 0,
+                    })
+                    .collect();
+                let edge_length = (pixels.len() as f32).sqrt().floor() as u16;
+                println!("{:?}", pixels);
+                let palette = vec![0, 255];
+                let frame = gif::Frame::from_palette_pixels(
+                    edge_length,
+                    edge_length,
+                    &pixels,
+                    &palette,
+                    None,
+                );
+
                 // TODO: convert QrCode to colors, and then convert these to GIF indexed
                 // colors, then export a frame as a GIF
                 // then, starting randomly flipping these indexed colors, either to 0 or 1
@@ -63,11 +84,10 @@ fn message<'r>(message: Result<Message<'r>, &'static str>) -> Result<Response<'r
                 // do this N times, and then export these as frames of the GIF animation
 
                 let mut buffer = Vec::new();
-                encode_as_gif(&mut buffer)
-                    .map_err(|e| {
-                        warn!("when creating image: {}", e);
-                        Status::BadRequest
-                    })?;
+                encode_as_gif(&mut buffer).map_err(|e| {
+                    warn!("when creating image: {}", e);
+                    Status::BadRequest
+                })?;
 
                 Response::build()
                     .header(ContentType::GIF)
