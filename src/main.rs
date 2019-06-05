@@ -41,8 +41,7 @@ fn bad_request<T>(reason: &str) -> Result<Response, T> {
         .ok()
 }
 
-fn encode_as_gif(buffer: &mut Vec<u8>) -> ImageResult<()> {
-    let frame = gif::Frame::default();
+fn encode_as_gif(frame: &gif::Frame, buffer: &mut Vec<u8>) -> ImageResult<()> {
     let mut encoder = gif::Encoder::new(buffer.by_ref());
     encoder.encode(&frame)
 }
@@ -57,6 +56,7 @@ fn message<'r>(message: Result<Message<'r>, &'static str>) -> Result<Response<'r
                     .min_dimensions(300, 300)
                     .build();
 
+                let width = qr_code.width() as u16;
                 let colors = qr_code.into_colors();
                 // println!("{:?}", colors);
                 let pixels: Vec<u8> = colors
@@ -66,16 +66,9 @@ fn message<'r>(message: Result<Message<'r>, &'static str>) -> Result<Response<'r
                         qrcode::types::Color::Dark => 0,
                     })
                     .collect();
-                let edge_length = (pixels.len() as f32).sqrt().floor() as u16;
                 println!("{:?}", pixels);
-                let palette = vec![0, 255];
-                let frame = gif::Frame::from_palette_pixels(
-                    edge_length,
-                    edge_length,
-                    &pixels,
-                    &palette,
-                    None,
-                );
+                let palette = vec![128, 255];
+                let frame = gif::Frame::from_palette_pixels(width, width, &pixels, &palette, None);
 
                 // TODO: convert QrCode to colors, and then convert these to GIF indexed
                 // colors, then export a frame as a GIF
@@ -84,7 +77,7 @@ fn message<'r>(message: Result<Message<'r>, &'static str>) -> Result<Response<'r
                 // do this N times, and then export these as frames of the GIF animation
 
                 let mut buffer = Vec::new();
-                encode_as_gif(&mut buffer).map_err(|e| {
+                encode_as_gif(&frame, &mut buffer).map_err(|e| {
                     warn!("when creating image: {}", e);
                     Status::BadRequest
                 })?;
