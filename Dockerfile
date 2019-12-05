@@ -1,8 +1,38 @@
-FROM liuchong/rustup:nightly-musl as build
-COPY . /root
+FROM rustlang/rust:nightly as build
+
+# prepare base image with dependencies
+## create shell project
+WORKDIR /usr/src/
+RUN USER=root cargo new --bin app
+WORKDIR /usr/src/app
+
+## copy dependencies
+COPY ./Cargo.lock ./Cargo.lock
+COPY ./Cargo.toml ./Cargo.toml
+
+## build and cache all dependencies
 RUN cargo build --release
 
-FROM scratch
-COPY --from=build /root/target/x86_64-unknown-linux-musl/release/qrmethis /qrmethis
+# build real app
+## replace src
+RUN rm src/*.rs
+COPY ./src ./src
+
+## build for release, using already compiled dependencies
+RUN touch src/main.rs
+RUN cargo build --release
+
+# minimise down to what's needed to run
+## find and store the libraries used by the app
+RUN ldd target/release/qrmethis | awk '{ print $3 }' > libs.txt
+RUN tar zcvf libs.tgz --files-from=libs.txt --dereference
+
+FROM rustlang/rust:nightly-slim
+## copy across libraries used
+COPY --from=build /usr/src/app/libs.tgz /libs.tgz
+RUN cd / && tar zxvf libs.tgz
+## copy across binary
+COPY --from=build /usr/src/app/target/release/qrmethis /qrmethis
 CMD ["/qrmethis"]
+
 EXPOSE 8000

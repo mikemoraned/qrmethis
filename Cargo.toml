@@ -1,14 +1,14 @@
 [package]
 name = "qrmethis"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Mike Moran <mike@houseofmoran.com>"]
 edition = "2018"
 
 [dependencies.qrcode]
-version = "0.10.0"
+version = "0.11.0"
 
 [dependencies.image]
-version = "0.21.1"
+version = "0.22.3"
 
 [dependencies]
-rocket = "0.4.0"
+rocket = "0.4.2"

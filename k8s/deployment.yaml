@@ -1,10 +1,10 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: qrmethis
   namespace: qrmethis
 spec:
-  replicas: 5
+  replicas: 2
   strategy:
     type: RollingUpdate
   selector:
@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: qrmethis
-          image: houseofmoran/qrmethis:0.1.0
+          image: houseofmoran/qrmethis:0.1.1
           resources:
             limits:
               memory: 15Mi
