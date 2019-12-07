@@ -10,7 +10,7 @@ spec:
   tls:
     - hosts:
         - qrmethis.do.houseofmoran.io
-      secretName: letsencrypt-cert-prod
+      secretName: qrmethis-cert-prod
   rules:
     - host: qrmethis.do.houseofmoran.io
       http:
